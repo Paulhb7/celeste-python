@@ -10,9 +10,9 @@ All capabilities. All providers. One interface.
 
 Primitives, not frameworks.
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](LICENSE)
-[![PyPI](https://img.shields.io/badge/PyPI-celeste--ai-orange?style=flat-square)](https://pypi.org/project/celeste-ai/)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue?style=for-the-badge)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-red?style=for-the-badge)](LICENSE)
+[![PyPI](https://img.shields.io/badge/PyPI-celeste--ai-green?style=for-the-badge)](https://pypi.org/project/celeste-ai/)
 
 [Quick Start](#-quick-start) • [Request Provider](https://github.com/withceleste/celeste-python/issues/new)
 
