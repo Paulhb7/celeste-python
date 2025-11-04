@@ -86,19 +86,9 @@ def _load_from_entry_points() -> None:
     entry_points = importlib.metadata.entry_points(group="celeste.packages")
 
     for ep in entry_points:
-        try:
-            register_func = ep.load()
-            # The function should register models and clients when called
-            register_func()
-        except (ImportError, AttributeError, ValueError) as e:
-            # Import-time errors should be visible even without logging configuration
-            import sys
-
-            print(
-                f"Warning: Failed to load package '{ep.name}': {e}",
-                file=sys.stderr,
-            )
-            logger.debug(f"Full traceback for package '{ep.name}'", exc_info=True)
+        register_func = ep.load()
+        # The function should register models and clients when called
+        register_func()
 
 
 # Load from entry points on import

@@ -103,6 +103,6 @@ class Credentials(BaseSettings):
         return getattr(self, credential_field, None) is not None
 
 
-credentials = Credentials()  # type: ignore[call-arg]
+credentials = Credentials.model_validate({})
 
 __all__ = ["Credentials", "credentials"]

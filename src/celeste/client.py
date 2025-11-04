@@ -94,7 +94,7 @@ class Client[In: Input, Out: Output](ABC, BaseModel):
         Raises:
             NotImplementedError: If capability doesn't support streaming.
         """
-        msg = f"{self.capability.value} or {self.provider.value} does not support streaming"
+        msg = f"Streaming not supported for {self.capability.value} with provider {self.provider.value}"
         raise NotImplementedError(msg)
 
     @abstractmethod
