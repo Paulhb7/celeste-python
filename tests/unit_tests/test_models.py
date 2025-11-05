@@ -14,19 +14,16 @@ SAMPLE_MODELS = [
     Model(
         id="gpt-4",
         provider=Provider.OPENAI,
-        capabilities={Capability.TEXT_GENERATION},
         display_name="GPT-4",
     ),
     Model(
         id="dall-e-3",
         provider=Provider.OPENAI,
-        capabilities={Capability.IMAGE_GENERATION},
         display_name="DALL-E 3",
     ),
     Model(
         id="claude-3",
         provider=Provider.ANTHROPIC,
-        capabilities={Capability.TEXT_GENERATION},
         display_name="Claude 3",
     ),
 ]
@@ -47,33 +44,70 @@ class TestRegisterModels:
     def test_register_models_accepts_single_or_list(self) -> None:
         """Registering models works with both single model and list."""
         single_model = SAMPLE_MODELS[0]
-        register_models(single_model)
-        assert get_model(single_model.id, single_model.provider) == single_model
+        register_models(single_model, Capability.TEXT_GENERATION)
+        retrieved = get_model(single_model.id, single_model.provider)
+        assert retrieved is not None
+        assert retrieved.id == single_model.id
+        assert retrieved.provider == single_model.provider
+        assert retrieved.display_name == single_model.display_name
+        assert Capability.TEXT_GENERATION in retrieved.capabilities
 
         clear()
 
-        register_models(SAMPLE_MODELS)
+        register_models(SAMPLE_MODELS, Capability.TEXT_GENERATION)
         assert len(list_models()) == 3
         for model in SAMPLE_MODELS:
-            assert get_model(model.id, model.provider) == model
+            retrieved = get_model(model.id, model.provider)
+            assert retrieved is not None
+            assert model.id == retrieved.id
+            assert model.provider == retrieved.provider
+            assert Capability.TEXT_GENERATION in retrieved.capabilities
 
     def test_reregistering_same_key_raises_error(self) -> None:
-        """Re-registering with same (id, provider) raises ValueError."""
+        """Re-registering with same (id, provider) but different display_name raises ValueError."""
         original = SAMPLE_MODELS[0]
-        register_models(original)
+        register_models(original, Capability.TEXT_GENERATION)
 
         duplicate = Model(
             id=original.id,
             provider=original.provider,
-            capabilities={Capability.IMAGE_GENERATION},
             display_name="Duplicate GPT-4",
         )
 
-        with pytest.raises(ValueError, match="already registered"):
-            register_models(duplicate)
+        with pytest.raises(ValueError, match="Inconsistent display_name"):
+            register_models(duplicate, Capability.IMAGE_GENERATION)
 
         result = get_model(original.id, original.provider)
-        assert result == original
+        assert result is not None
+        assert result.display_name == original.display_name
+        assert len(list_models()) == 1
+
+    def test_registering_same_model_for_multiple_capabilities_merges(self) -> None:
+        """Registering the same model for multiple capabilities merges capabilities."""
+        model = Model(
+            id="multi-cap-model",
+            provider=Provider.OPENAI,
+            display_name="Multi-Cap Model",
+        )
+
+        register_models(model, Capability.TEXT_GENERATION)
+        retrieved = get_model("multi-cap-model", Provider.OPENAI)
+        assert retrieved is not None
+        assert Capability.TEXT_GENERATION in retrieved.capabilities
+        assert Capability.EMBEDDINGS not in retrieved.capabilities
+
+        # Register same model for different capability
+        embeddings_model = Model(
+            id="multi-cap-model",
+            provider=Provider.OPENAI,
+            display_name="Multi-Cap Model",
+        )
+        register_models(embeddings_model, Capability.EMBEDDINGS)
+
+        retrieved = get_model("multi-cap-model", Provider.OPENAI)
+        assert retrieved is not None
+        assert Capability.TEXT_GENERATION in retrieved.capabilities
+        assert Capability.EMBEDDINGS in retrieved.capabilities
         assert len(list_models()) == 1
 
 
@@ -83,7 +117,9 @@ class TestListModels:
     @pytest.fixture(autouse=True)
     def setup_models(self) -> None:
         """Set up test models for filtering tests."""
-        register_models(SAMPLE_MODELS)
+        register_models(SAMPLE_MODELS[0], Capability.TEXT_GENERATION)
+        register_models(SAMPLE_MODELS[1], Capability.IMAGE_GENERATION)
+        register_models(SAMPLE_MODELS[2], Capability.TEXT_GENERATION)
 
     def test_list_all_models(self) -> None:
         """Listing all models without filters."""
@@ -141,10 +177,12 @@ class TestGetModel:
     def test_get_existing_model(self) -> None:
         """Retrieving an existing model by id and provider."""
         model = SAMPLE_MODELS[0]
-        register_models(model)
+        register_models(model, Capability.TEXT_GENERATION)
 
         result = get_model(model.id, model.provider)
-        assert result == model
+        assert result is not None
+        assert result.id == model.id
+        assert result.provider == model.provider
 
     def test_get_nonexistent_model_from_empty_registry_returns_none(self) -> None:
         """Getting a model from empty registry returns None."""
@@ -159,7 +197,9 @@ class TestGetModel:
         self, model_id: str, provider: Provider
     ) -> None:
         """get_model returns None for non-existent model in populated registry."""
-        register_models(SAMPLE_MODELS)
+        register_models(SAMPLE_MODELS[0], Capability.TEXT_GENERATION)
+        register_models(SAMPLE_MODELS[1], Capability.IMAGE_GENERATION)
+        register_models(SAMPLE_MODELS[2], Capability.TEXT_GENERATION)
         assert get_model(model_id, provider) is None
 
     def test_same_id_different_providers_are_distinct(self) -> None:
@@ -167,20 +207,26 @@ class TestGetModel:
         model1 = Model(
             id="shared-id",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="OpenAI Model",
         )
         model2 = Model(
             id="shared-id",
             provider=Provider.ANTHROPIC,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Anthropic Model",
         )
 
-        register_models([model1, model2])
+        register_models([model1, model2], Capability.TEXT_GENERATION)
 
-        assert get_model("shared-id", Provider.OPENAI) == model1
-        assert get_model("shared-id", Provider.ANTHROPIC) == model2
+        retrieved1 = get_model("shared-id", Provider.OPENAI)
+        retrieved2 = get_model("shared-id", Provider.ANTHROPIC)
+        assert retrieved1 is not None
+        assert retrieved1.id == model1.id
+        assert retrieved1.provider == model1.provider
+        assert retrieved1.display_name == model1.display_name
+        assert retrieved2 is not None
+        assert retrieved2.id == model2.id
+        assert retrieved2.provider == model2.provider
+        assert retrieved2.display_name == model2.display_name
 
 
 class TestEntryPoints:
@@ -196,10 +242,11 @@ class TestEntryPoints:
         test_model = Model(
             id="ep-test-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Entry Point Test Model",
         )
-        mock_ep.load.return_value = lambda: register_models(test_model)
+        mock_ep.load.return_value = lambda: register_models(
+            test_model, Capability.TEXT_GENERATION
+        )
 
         mock_entry_points.return_value = [mock_ep]
 
@@ -242,12 +289,11 @@ class TestParameterSupport:
         model = Model(
             id="param-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Model with Params",
             parameter_constraints={"temperature": Str(), "max_tokens": Str()},
         )
 
-        register_models(model)
+        register_models(model, Capability.TEXT_GENERATION)
         retrieved = get_model("param-model", Provider.OPENAI)
 
         assert retrieved is not None
@@ -261,19 +307,18 @@ class TestParameterSupport:
             Model(
                 id="with-params",
                 provider=Provider.ANTHROPIC,
-                capabilities={Capability.TEXT_GENERATION},
                 display_name="With Params",
                 parameter_constraints={"feature_a": Str(), "feature_b": Str()},
             ),
             Model(
                 id="without-params",
                 provider=Provider.GOOGLE,
-                capabilities={Capability.IMAGE_GENERATION},
                 display_name="Without Params",
             ),
         ]
 
-        register_models(models)
+        register_models(models[0], Capability.TEXT_GENERATION)
+        register_models(models[1], Capability.IMAGE_GENERATION)
         all_models = list_models()
 
         with_params = next((m for m in all_models if m.id == "with-params"), None)
@@ -292,7 +337,9 @@ class TestClear:
 
     def test_clear_removes_all_models(self) -> None:
         """clear removes all registered models."""
-        register_models(SAMPLE_MODELS)
+        register_models(SAMPLE_MODELS[0], Capability.TEXT_GENERATION)
+        register_models(SAMPLE_MODELS[1], Capability.IMAGE_GENERATION)
+        register_models(SAMPLE_MODELS[2], Capability.TEXT_GENERATION)
         assert len(list_models()) == 3
 
         clear()
@@ -308,12 +355,11 @@ class TestModel:
         model = Model(
             id="test-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Test Model",
             parameter_constraints={"param_a": Str(), "param_b": Str()},
         )
 
-        register_models(model)
+        register_models(model, Capability.TEXT_GENERATION)
         retrieved = get_model("test-model", Provider.OPENAI)
 
         assert retrieved is not None
@@ -327,11 +373,10 @@ class TestModel:
         model = Model(
             id="basic-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Basic Model",
         )
 
-        register_models(model)
+        register_models(model, Capability.TEXT_GENERATION)
         retrieved = get_model("basic-model", Provider.OPENAI)
 
         assert retrieved is not None

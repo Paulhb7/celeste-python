@@ -1,8 +1,10 @@
 """Base client and client registry for AI capabilities."""
 
 from abc import ABC, abstractmethod
+from json import JSONDecodeError
 from typing import Any, Unpack
 
+import httpx
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from celeste.core import Capability, Provider
@@ -57,6 +59,23 @@ class Client[In: Input, Out: Output](ABC, BaseModel):
     ) -> object:
         """Parse content from provider response."""
         pass
+
+    def _handle_error_response(self, response: httpx.Response) -> None:
+        """Handle error responses from provider APIs"""
+        if not response.is_success:
+            # Try to extract error message from JSON response
+            try:
+                error_data = response.json()
+                error_msg = error_data.get("error", {}).get("message", response.text)
+            except JSONDecodeError:
+                error_msg = response.text or f"HTTP {response.status_code}"
+
+            # Raise HTTPStatusError with provider context
+            raise httpx.HTTPStatusError(
+                f"{self.provider.value} API error: {error_msg}",
+                request=response.request,
+                response=response,
+            )
 
     def _transform_output(
         self, content: object, **parameters: Unpack[Parameters]
