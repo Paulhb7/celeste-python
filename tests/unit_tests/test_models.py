@@ -14,19 +14,16 @@ SAMPLE_MODELS = [
     Model(
         id="gpt-4",
         provider=Provider.OPENAI,
-        capabilities={Capability.TEXT_GENERATION},
         display_name="GPT-4",
     ),
     Model(
         id="dall-e-3",
         provider=Provider.OPENAI,
-        capabilities={Capability.IMAGE_GENERATION},
         display_name="DALL-E 3",
     ),
     Model(
         id="claude-3",
         provider=Provider.ANTHROPIC,
-        capabilities={Capability.TEXT_GENERATION},
         display_name="Claude 3",
     ),
 ]
@@ -69,7 +66,6 @@ class TestRegisterModels:
         duplicate = Model(
             id=original.id,
             provider=original.provider,
-            capabilities={Capability.IMAGE_GENERATION},
             display_name="Duplicate GPT-4",
         )
 
@@ -86,7 +82,6 @@ class TestRegisterModels:
         model = Model(
             id="multi-cap-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Multi-Cap Model",
         )
 
@@ -100,7 +95,6 @@ class TestRegisterModels:
         embeddings_model = Model(
             id="multi-cap-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.EMBEDDINGS},
             display_name="Multi-Cap Model",
         )
         register_models(embeddings_model, Capability.EMBEDDINGS)
@@ -208,13 +202,11 @@ class TestGetModel:
         model1 = Model(
             id="shared-id",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="OpenAI Model",
         )
         model2 = Model(
             id="shared-id",
             provider=Provider.ANTHROPIC,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Anthropic Model",
         )
 
@@ -237,7 +229,6 @@ class TestEntryPoints:
         test_model = Model(
             id="ep-test-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Entry Point Test Model",
         )
         mock_ep.load.return_value = lambda: register_models(
@@ -285,7 +276,6 @@ class TestParameterSupport:
         model = Model(
             id="param-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Model with Params",
             parameter_constraints={"temperature": Str(), "max_tokens": Str()},
         )
@@ -304,14 +294,12 @@ class TestParameterSupport:
             Model(
                 id="with-params",
                 provider=Provider.ANTHROPIC,
-                capabilities={Capability.TEXT_GENERATION},
                 display_name="With Params",
                 parameter_constraints={"feature_a": Str(), "feature_b": Str()},
             ),
             Model(
                 id="without-params",
                 provider=Provider.GOOGLE,
-                capabilities={Capability.IMAGE_GENERATION},
                 display_name="Without Params",
             ),
         ]
@@ -354,7 +342,6 @@ class TestModel:
         model = Model(
             id="test-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Test Model",
             parameter_constraints={"param_a": Str(), "param_b": Str()},
         )
@@ -373,7 +360,6 @@ class TestModel:
         model = Model(
             id="basic-model",
             provider=Provider.OPENAI,
-            capabilities={Capability.TEXT_GENERATION},
             display_name="Basic Model",
         )
 

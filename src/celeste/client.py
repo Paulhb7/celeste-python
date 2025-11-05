@@ -63,12 +63,19 @@ class Client[In: Input, Out: Output](ABC, BaseModel):
     def _handle_error_response(self, response: httpx.Response) -> None:
         """Handle error responses from provider APIs"""
         if not response.is_success:
+            # Try to extract error message from JSON response
             try:
                 error_data = response.json()
                 error_msg = error_data.get("error", {}).get("message", response.text)
-                raise ValueError(f"{self.provider.value} API error: {error_msg}")
-            except (AttributeError, JSONDecodeError):
-                response.raise_for_status()
+            except JSONDecodeError:
+                error_msg = response.text or f"HTTP {response.status_code}"
+
+            # Raise HTTPStatusError with provider context
+            raise httpx.HTTPStatusError(
+                f"{self.provider.value} API error: {error_msg}",
+                request=response.request,
+                response=response,
+            )
 
     def _transform_output(
         self, content: object, **parameters: Unpack[Parameters]
