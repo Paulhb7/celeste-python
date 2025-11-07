@@ -1,12 +1,10 @@
 """Celeste text generation capability."""
 
 
-
-
 def register_package() -> None:
     """Register text generation package (client and models)."""
-    from celeste.core import Capability
     from celeste.client import register_client
+    from celeste.core import Capability
     from celeste.models import register_models
     from celeste_text_generation.models import MODELS
     from celeste_text_generation.providers import PROVIDERS
@@ -19,12 +17,12 @@ def register_package() -> None:
 
 
 # Import after register_package is defined to avoid circular imports
-from celeste_text_generation.io import (
+from celeste_text_generation.io import (  # noqa: E402
     TextGenerationInput,
     TextGenerationOutput,
     TextGenerationUsage,
 )
-from celeste_text_generation.streaming import TextGenerationStream
+from celeste_text_generation.streaming import TextGenerationStream  # noqa: E402
 
 __all__ = [
     "TextGenerationInput",
