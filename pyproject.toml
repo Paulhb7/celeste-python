@@ -32,6 +32,10 @@ Documentation = "https://withceleste.ai/docs"
 Repository = "https://github.com/withceleste/celeste-python"
 Issues = "https://github.com/withceleste/celeste-python/issues"
 
+[project.optional-dependencies]
+text-generation = ["celeste-text-generation>=0.1.0"]
+all = ["celeste-text-generation>=0.1.0"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
@@ -48,6 +52,9 @@ dev = [
 
 [tool.uv.workspace]
 members = ["packages/*"]
+
+[tool.uv.sources]
+celeste-text-generation = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

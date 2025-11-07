@@ -68,7 +68,7 @@ jobs:
         with:
           fetch-depth: 1
       - uses: ./.github/actions/setup-python-uv
-      - run: uv build
+      - run: uv build --all-packages
       - run: |
           uv pip install twine
           uv run twine check dist/*
