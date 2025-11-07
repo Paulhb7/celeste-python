@@ -37,11 +37,11 @@ typecheck:
 
 # Testing
 test:
-	uv run pytest tests/ --cov=celeste --cov-report=term-missing --cov-fail-under=90
+	uv run pytest tests/unit_tests --cov=celeste --cov-report=term-missing --cov-fail-under=90
 
 # Integration testing (requires API keys)
 integration-test:
-	uv run pytest tests/integration_tests/ -m integration -v -n auto
+	uv run pytest tests/integration_tests/ -m integration -v --dist=worksteal -n auto
 
 # Security scanning (config reads from pyproject.toml)
 security:
