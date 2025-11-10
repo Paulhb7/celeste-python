@@ -1,5 +1,7 @@
 """Custom exceptions for Celeste."""
 
+from celeste.models import Model
+
 
 class Error(Exception):
     """Base exception for all Celeste errors."""
@@ -93,10 +95,10 @@ class StreamingError(Error):
 class StreamingNotSupportedError(StreamingError):
     """Raised when streaming is requested for a model that doesn't support it."""
 
-    def __init__(self, model_id: str) -> None:
+    def __init__(self, model: Model) -> None:
         """Initialize with model details."""
-        self.model_id = model_id
-        super().__init__(f"Streaming not supported for model '{model_id}'")
+        self.model = model
+        super().__init__(f"Streaming not supported for model '{model.id}'")
 
 
 class StreamNotExhaustedError(StreamingError):
