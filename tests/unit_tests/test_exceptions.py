@@ -2,6 +2,7 @@
 
 import pytest
 
+from celeste.core import Provider
 from celeste.exceptions import (
     ClientNotFoundError,
     ConstraintViolationError,
@@ -14,6 +15,7 @@ from celeste.exceptions import (
     UnsupportedCapabilityError,
     UnsupportedParameterError,
 )
+from celeste.models import Model
 
 
 class TestExceptionHierarchy:
@@ -21,11 +23,16 @@ class TestExceptionHierarchy:
 
     def test_all_exceptions_inherit_from_error(self) -> None:
         """Test that all custom exceptions inherit from Error."""
+        test_model = Model(
+            id="model-1",
+            provider=Provider.OPENAI,
+            display_name="Test Model",
+        )
         exceptions = [
             ModelNotFoundError("model-1", "openai"),
             UnsupportedCapabilityError("model-1", "text-generation"),
             ClientNotFoundError("text-generation", "openai"),
-            StreamingNotSupportedError("model-1"),
+            StreamingNotSupportedError(test_model.id),
             StreamNotExhaustedError(),
             StreamEmptyError(),
             MissingCredentialsError("openai"),
@@ -127,9 +134,10 @@ class TestStreamingNotSupportedError:
 
     def test_creates_with_model_id(self) -> None:
         """Test exception stores model_id attribute."""
-        exc = StreamingNotSupportedError("dall-e-3")
+        model_id = "dall-e-3"
+        exc = StreamingNotSupportedError(model_id)
 
-        assert exc.model_id == "dall-e-3"
+        assert exc.model_id == model_id
         assert "dall-e-3" in str(exc)
         assert "Streaming not supported" in str(exc)
 

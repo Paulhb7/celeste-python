@@ -147,19 +147,17 @@ class Client[In: Input, Out: Output, Params: Parameters](ABC, BaseModel):
         """Make HTTP request(s) and return response object."""
         ...
 
-    @abstractmethod
     def _stream_class(self) -> type[Stream[Out, Params]]:
         """Return the Stream class for this client."""
-        ...
+        raise StreamingNotSupportedError(model_id=self.model.id)
 
-    @abstractmethod
     def _make_stream_request(
         self,
         request_body: dict[str, Any],
         **parameters: Unpack[Params],  # type: ignore[misc]
     ) -> AsyncIterator[dict[str, Any]]:
         """Make HTTP streaming request and return async iterator of events."""
-        ...
+        raise StreamingNotSupportedError(model_id=self.model.id)
 
     def _build_metadata(self, response_data: dict[str, Any]) -> dict[str, Any]:
         """Build metadata dictionary from response data."""

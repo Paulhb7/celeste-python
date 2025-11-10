@@ -6,6 +6,7 @@ from typing import Any, get_args, get_origin
 
 from pydantic import BaseModel, TypeAdapter
 
+from celeste.exceptions import ConstraintViolationError, ValidationError
 from celeste.models import Model
 from celeste.parameters import ParameterMapper
 from celeste_text_generation.parameters import TextGenerationParameter
@@ -39,7 +40,7 @@ class ThinkingBudgetMapper(ParameterMapper):
             Updated request dict with thinking parameter if value provided.
 
         Raises:
-            ValueError: If value is not -1 and is less than 1024 (minimum required).
+            ConstraintViolationError: If value is not -1 and is less than 1024 (minimum required).
         """
         validated_value = self._validate_value(value, model)
         if validated_value is None:
@@ -53,7 +54,7 @@ class ThinkingBudgetMapper(ParameterMapper):
             # Fixed budget: validate minimum is 1024
             if validated_value < 1024:
                 msg = f"thinking_budget must be -1 (dynamic) or >= 1024 for {model.id}, got {validated_value}"
-                raise ValueError(msg)
+                raise ConstraintViolationError(msg)
             thinking_config = {"type": "enabled", "budget_tokens": validated_value}
 
         request["thinking"] = thinking_config
@@ -150,7 +151,7 @@ class OutputSchemaMapper(ParameterMapper):
         elif isinstance(parsed_json, dict) and not parsed_json:
             # Empty dict for BaseModel (not list) - this is invalid, raise error
             msg = "Empty tool_use input dict cannot be converted to BaseModel"
-            raise ValueError(msg)
+            raise ValidationError(msg)
 
         # Parse to BaseModel instance using TypeAdapter
         # TypeAdapter handles both BaseModel and list[BaseModel]
