@@ -4,6 +4,7 @@ import json
 from collections.abc import Callable
 from typing import Any, Unpack
 
+from celeste.exceptions import ValidationError
 from celeste.io import Chunk
 from celeste_text_generation.io import (
     TextGenerationChunk,
@@ -308,7 +309,7 @@ class AnthropicTextGenerationStream(TextGenerationStream):
                             )
                         else:
                             msg = "Empty tool_use input dict and no text chunks available for BaseModel"
-                            raise ValueError(msg)
+                            raise ValidationError(msg)
                     else:
                         # Empty dict for list[BaseModel] - OK, parse_output will convert to []
                         content = self._transform_output(tool_input, **self._parameters)
@@ -322,7 +323,7 @@ class AnthropicTextGenerationStream(TextGenerationStream):
                     content = self._transform_output(text_content, **self._parameters)
                 else:
                     msg = "No tool_use input and no text chunks available"
-                    raise ValueError(msg)
+                    raise ValidationError(msg)
         else:
             # No tool_use blocks or no output_schema: concatenate text chunks
             content = "".join(chunk.content for chunk in chunks)

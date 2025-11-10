@@ -7,6 +7,7 @@ import httpx
 from pydantic import BaseModel
 
 from celeste.client import Client
+from celeste.exceptions import ValidationError
 from celeste_text_generation.io import (
     TextGenerationFinishReason,
     TextGenerationInput,
@@ -58,7 +59,7 @@ class TextGenerationClient(
             msg = (
                 "prompt is required (either as positional argument or keyword argument)"
             )
-            raise TypeError(msg)
+            raise ValidationError(msg)
         return TextGenerationInput(prompt=prompt)
 
     @classmethod
