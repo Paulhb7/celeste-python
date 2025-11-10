@@ -7,6 +7,7 @@ from typing import Any, Unpack
 import httpx
 
 from celeste.artifacts import ImageArtifact
+from celeste.exceptions import ConstraintViolationError, ValidationError
 from celeste.mime_types import ImageMimeType
 from celeste.parameters import ParameterMapper
 from celeste_image_generation.client import ImageGenerationClient
@@ -75,7 +76,7 @@ class ByteDanceImageGenerationClient(ImageGenerationClient):
                 )
 
         msg = "No image content found in ByteDance response"
-        raise ValueError(msg)
+        raise ValidationError(msg)
 
     def _parse_finish_reason(
         self, response_data: dict[str, Any]
@@ -91,12 +92,7 @@ class ByteDanceImageGenerationClient(ImageGenerationClient):
 
         Extracts seed if present.
         """
-        # Filter content fields before calling super
-        content_fields = {"images", "data"}
-        filtered_data = {
-            k: v for k, v in response_data.items() if k not in content_fields
-        }
-        metadata = super()._build_metadata(filtered_data)
+        metadata = super()._build_metadata(response_data)
         # Add provider-specific parsed fields
         seed = response_data.get("seed")
         if seed is not None:
@@ -118,7 +114,7 @@ class ByteDanceImageGenerationClient(ImageGenerationClient):
                 "  • aspect_ratio: Exact dimensions (e.g., '2048x2048', '3840x2160')\n"
                 "Use one or the other, not both."
             )
-            raise ValueError(msg)
+            raise ConstraintViolationError(msg)
 
         request_body["stream"] = False
 

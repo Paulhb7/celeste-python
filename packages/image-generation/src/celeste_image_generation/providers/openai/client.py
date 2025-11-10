@@ -7,6 +7,7 @@ from typing import Any, Unpack
 import httpx
 
 from celeste.artifacts import ImageArtifact
+from celeste.exceptions import ValidationError
 from celeste.parameters import ParameterMapper
 from celeste_image_generation.client import ImageGenerationClient
 from celeste_image_generation.io import (
@@ -54,7 +55,7 @@ class OpenAIImageGenerationClient(ImageGenerationClient):
         data = response_data.get("data", [])
         if not data:
             msg = "No image data in response"
-            raise ValueError(msg)
+            raise ValidationError(msg)
 
         image_data = data[0]
 
@@ -68,7 +69,7 @@ class OpenAIImageGenerationClient(ImageGenerationClient):
             return ImageArtifact(url=url)
 
         msg = "No image URL or base64 data in response"
-        raise ValueError(msg)
+        raise ValidationError(msg)
 
     def _parse_finish_reason(
         self, response_data: dict[str, Any]
@@ -78,12 +79,7 @@ class OpenAIImageGenerationClient(ImageGenerationClient):
 
     def _build_metadata(self, response_data: dict[str, Any]) -> dict[str, Any]:
         """Build metadata dictionary from response data."""
-        # Filter content field before calling super
-        content_fields = {"data"}
-        filtered_data = {
-            k: v for k, v in response_data.items() if k not in content_fields
-        }
-        metadata = super()._build_metadata(filtered_data)
+        metadata = super()._build_metadata(response_data)
         # Add provider-specific parsed fields
         if response_data.get("data") and response_data["data"]:
             revised_prompt = response_data["data"][0].get("revised_prompt")

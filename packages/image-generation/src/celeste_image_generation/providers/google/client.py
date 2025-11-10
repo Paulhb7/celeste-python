@@ -7,6 +7,8 @@ import httpx
 from pydantic import ConfigDict
 
 from celeste.artifacts import ImageArtifact
+from celeste.core import Provider
+from celeste.exceptions import ModelNotFoundError
 from celeste.mime_types import ImageMimeType
 from celeste.parameters import ParameterMapper
 from celeste_image_generation.client import ImageGenerationClient
@@ -92,16 +94,11 @@ class GoogleImageGenerationClient(ImageGenerationClient):
 
     def _build_metadata(self, response_data: dict[str, Any]) -> dict[str, Any]:
         """Build metadata dictionary from response data."""
-        # Parse finish_reason from full response_data before filtering (needs "candidates")
+        # Parse finish_reason from full response_data before calling super (needs "candidates")
         finish_reason = self._parse_finish_reason(response_data)
 
-        # Filter content fields before calling super (Imagen uses "predictions", Gemini uses "candidates")
-        content_fields = {"predictions", "candidates"}
-        filtered_data = {
-            k: v for k, v in response_data.items() if k not in content_fields
-        }
-        metadata = super()._build_metadata(filtered_data)
-        # Override with pre-parsed finish_reason (base class parsed from filtered_data which returns None)
+        metadata = super()._build_metadata(response_data)
+        # Override with pre-parsed finish_reason
         if finish_reason is not None:
             metadata["finish_reason"] = finish_reason
         return metadata
@@ -145,8 +142,7 @@ def _get_adapter_for_model(model_id: str) -> tuple[type, str]:
 
         return GeminiImageAPIAdapter, config.GEMINI_ENDPOINT
 
-    msg = f"Unknown Google image generation model: {model_id}"
-    raise ValueError(msg)
+    raise ModelNotFoundError(model_id=model_id, provider=Provider.GOOGLE)
 
 
 __all__ = ["GoogleImageGenerationClient"]
