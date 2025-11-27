@@ -56,6 +56,15 @@ class MistralTextGenerationStream(TextGenerationStream):
 
         # Extract content delta
         content_delta = delta.get("content")
+
+        # Handle magistral thinking models that may return list content
+        if isinstance(content_delta, list):
+            text_parts = []
+            for block in content_delta:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    text_parts.append(block.get("text", ""))
+            content_delta = "".join(text_parts) if text_parts else None
+
         finish_reason_str = first_choice.get("finish_reason")
 
         # Extract usage from event if present (in final event)
