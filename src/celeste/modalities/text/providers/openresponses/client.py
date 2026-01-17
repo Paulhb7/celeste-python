@@ -1,13 +1,14 @@
-"""OpenAI text client."""
+"""OpenResponses text client."""
 
 from typing import Any, Unpack
 
+from celeste.constraints import Float, ImagesConstraint, Int, Schema
 from celeste.parameters import ParameterMapper
-from celeste.providers.openai.responses.client import (
-    OpenAIResponsesClient as OpenAIResponsesMixin,
+from celeste.providers.openresponses.responses.client import (
+    OpenResponsesClient as OpenResponsesMixin,
 )
-from celeste.providers.openai.responses.streaming import (
-    OpenAIResponsesStream as _OpenAIResponsesStream,
+from celeste.providers.openresponses.responses.streaming import (
+    OpenResponsesStream as _OpenResponsesStream,
 )
 from celeste.types import ImageContent, Message, TextContent, VideoContent
 from celeste.utils import build_image_data_url
@@ -20,13 +21,13 @@ from ...io import (
     TextOutput,
     TextUsage,
 )
-from ...parameters import TextParameters
+from ...parameters import TextParameter, TextParameters
 from ...streaming import TextStream
-from .parameters import OPENAI_PARAMETER_MAPPERS
+from .parameters import OPENRESPONSES_PARAMETER_MAPPERS
 
 
-class OpenAITextStream(_OpenAIResponsesStream, TextStream):
-    """OpenAI streaming for text modality."""
+class OpenResponsesTextStream(_OpenResponsesStream, TextStream):
+    """OpenResponses streaming for text modality."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -87,23 +88,40 @@ class OpenAITextStream(_OpenAIResponsesStream, TextStream):
         return events
 
 
-class OpenAITextClient(OpenAIResponsesMixin, TextClient):
-    """OpenAI text client using Responses API."""
+class OpenResponsesTextClient(OpenResponsesMixin, TextClient):
+    """OpenResponses text client using Responses API."""
+
+    def model_post_init(self, __context: object) -> None:
+        """Ensure defaults for common parameters on unregistered models."""
+        super().model_post_init(__context)
+        constraints = self.model.parameter_constraints
+        if TextParameter.TEMPERATURE not in constraints:
+            constraints[TextParameter.TEMPERATURE] = Float()
+        if TextParameter.MAX_TOKENS not in constraints:
+            constraints[TextParameter.MAX_TOKENS] = Int()
+        if TextParameter.OUTPUT_SCHEMA not in constraints:
+            constraints[TextParameter.OUTPUT_SCHEMA] = Schema()
+        if TextParameter.IMAGE not in constraints:
+            constraints[TextParameter.IMAGE] = ImagesConstraint()
 
     @classmethod
     def parameter_mappers(cls) -> list[ParameterMapper]:
-        return OPENAI_PARAMETER_MAPPERS
+        return OPENRESPONSES_PARAMETER_MAPPERS
 
     async def generate(
         self,
         prompt: str | None = None,
         *,
         messages: list[Message] | None = None,
+        base_url: str | None = None,
+        extra_body: dict[str, Any] | None = None,
         **parameters: Unpack[TextParameters],
     ) -> TextOutput:
         """Generate text from prompt."""
         inputs = TextInput(prompt=prompt, messages=messages)
-        return await self._predict(inputs, **parameters)
+        return await self._predict(
+            inputs, base_url=base_url, extra_body=extra_body, **parameters
+        )
 
     async def analyze(
         self,
@@ -112,21 +130,22 @@ class OpenAITextClient(OpenAIResponsesMixin, TextClient):
         messages: list[Message] | None = None,
         image: ImageContent | None = None,
         video: VideoContent | None = None,
+        base_url: str | None = None,
+        extra_body: dict[str, Any] | None = None,
         **parameters: Unpack[TextParameters],
     ) -> TextOutput:
         """Analyze image(s) or video(s) with prompt or messages."""
         inputs = TextInput(prompt=prompt, messages=messages, image=image, video=video)
-        return await self._predict(inputs, **parameters)
+        return await self._predict(
+            inputs, base_url=base_url, extra_body=extra_body, **parameters
+        )
 
     def _init_request(self, inputs: TextInput) -> dict[str, Any]:
         """Initialize request with input content."""
-        # If messages provided, use them directly (messages take precedence)
         if inputs.messages is not None:
             return {"input": [message.model_dump() for message in inputs.messages]}
 
-        # Fall back to prompt-based input
         content: list[dict[str, Any]] = []
-
         if inputs.image is not None:
             images = inputs.image if isinstance(inputs.image, list) else [inputs.image]
             for img in images:
@@ -135,7 +154,6 @@ class OpenAITextClient(OpenAIResponsesMixin, TextClient):
                 )
 
         content.append({"type": "input_text", "text": inputs.prompt or ""})
-
         return {"input": [{"role": "user", "content": content}]}
 
     def _parse_usage(self, response_data: dict[str, Any]) -> TextUsage:
@@ -150,8 +168,6 @@ class OpenAITextClient(OpenAIResponsesMixin, TextClient):
     ) -> TextContent:
         """Parse text content from response."""
         output = super()._parse_content(response_data)
-
-        # Extract text from OpenAI Responses API format
         for item in output:
             if item.get("type") == "message":
                 for part in item.get("content", []):
@@ -163,12 +179,12 @@ class OpenAITextClient(OpenAIResponsesMixin, TextClient):
 
     def _parse_finish_reason(self, response_data: dict[str, Any]) -> TextFinishReason:
         """Parse finish reason from response."""
-        base_reason = super()._parse_finish_reason(response_data)
-        return TextFinishReason(reason=base_reason.reason)
+        finish_reason = super()._parse_finish_reason(response_data)
+        return TextFinishReason(reason=finish_reason.reason)
 
     def _stream_class(self) -> type[TextStream]:
         """Return the Stream class for this provider."""
-        return OpenAITextStream
+        return OpenResponsesTextStream
 
 
-__all__ = ["OpenAITextClient", "OpenAITextStream"]
+__all__ = ["OpenResponsesTextClient", "OpenResponsesTextStream"]
