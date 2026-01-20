@@ -214,6 +214,55 @@ print(response.metadata["model"])     # str
 ```
 
 Catch errors **before** production.
+---
+
+## 🧠 Connect Celeste with your favourite IDE
+
+Bring Celeste’s documentation directly into your editor via **MCP (Model Context Protocol)**.  
+Your IDE gets first-class access to the Celeste Python docs, schemas, and examples.  
+Less tab-switching. More flow.
+
+---
+
+### ▶️ Cursor
+
+To add the Celeste MCP to **Cursor**, update your `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "celeste-python Docs": {
+      "url": "https://gitmcp.io/withceleste/celeste-python"
+    }
+  }
+}
+```
+
+Restart Cursor, and Celeste’s docs are now available as contextual knowledge.
+
+---
+
+### ▶️ VS Code
+
+To add the Celeste MCP to **VS Code**, update your `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "celeste-python Docs": {
+      "type": "sse",
+      "url": "https://gitmcp.io/withceleste/celeste-python"
+    }
+  }
+}
+```
+
+Reload VS Code, and enjoy in-editor access to Celeste’s primitives and APIs.
+
+---
+
+💡 **Why MCP?**  
+Because documentation should feel like an extension of your brain, not a browser tab.
 
 ---
 
