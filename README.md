@@ -10,11 +10,10 @@ All modalities. All providers. One interface.
 
 Primitives, not frameworks.
 
-
-
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=for-the-badge)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/celeste-ai?style=for-the-badge)](https://pypi.org/project/celeste-ai/)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-withceleste%2Fceleste--python-blue?style=for-the-badge)](https://deepwiki.com/withceleste/celeste-python)
 
 <a href="https://github.com/withceleste/celeste-python" target="_parent">
   <img alt="" src="https://img.shields.io/github/stars/withceleste/celeste-python.svg?style=social&label=Star" alt="GitHub stars" />
